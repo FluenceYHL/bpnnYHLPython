@@ -1,51 +1,70 @@
+# self
+import components
+# package
 import image
 import cv2
 import numpy as np
 import a_train as zzr
 import cluster
+import warnings
 
 
-def drawCircle(Event, X, Y, Flags, mmm):
-    Color = (0, 0, 0)  # black
-    global IX, IY, Drawing, Mode
-    if Event == cv2.EVENT_LBUTTONDOWN:
-        Drawing = True
-        IX, IY = X, Y
-    elif Event == cv2.EVENT_MOUSEMOVE and Flags == cv2.EVENT_FLAG_LBUTTON:
-        if Drawing:
-            cv2.line(Img, (IX, IY), (X, Y), Color, 30)
+class doodleBoard():
+    def __init__(self):
+        self.quit = False
+        self.Drawing = True
+        #　加载神经网络
+        self.bpnn = zzr.Neural_Networks()
+        self.bpnn.whid = np.load("./npys/whid.npy")
+        self.bpnn.wout = np.load("./npys/wout.npy")
+        # 加载　cv 涂鸦板
+        self.Img = np.zeros((500, 700, 3), np.uint8)
+        self.Img = np.full(self.Img.shape, 255, np.uint8)
+        cv2.namedWindow('Image')
+        cv2.setMouseCallback('Image', self.__paint)
+
+    def __predict(self):
+        imgs = cluster.getImages(self.Img)
+        guess = ''
+        for pair in imgs:
+            out = self.bpnn.judge(
+                self.bpnn.convert_to_binary(pair[2]))
+            guess += str(out)
+        print('我猜是　　:  ' + guess)
+        components.speaker().speak(int(guess))
+        # components.noticeBoard(480, 560, '基尔兽').display(guess)
+
+    def __paint(self, Event, X, Y, Flags, mmm):
+        Color = (0, 0, 0)
+        global IX, IY
+        if Event == cv2.EVENT_LBUTTONDOWN:
+            self.Drawing = True
             IX, IY = X, Y
-    elif Event == cv2.EVENT_LBUTTONUP:
-        Drawing = False
+        elif Event == cv2.EVENT_MOUSEMOVE and Flags == cv2.EVENT_FLAG_LBUTTON:
+            if self.Drawing:
+                cv2.line(self.Img, (IX, IY), (X, Y), Color, 30)
+                IX, IY = X, Y
+        elif Event == cv2.EVENT_LBUTTONUP:
+            self.__predict()
+            self.Drawing = False
+
+    def run(self):
+        while (not self.quit):
+            self.Img = np.zeros((500, 700, 3), np.uint8)
+            self.Img = np.full(self.Img.shape, 255, np.uint8)
+            while (1):
+                cv2.imshow('Image', self.Img)
+                k = cv2.waitKey(1) & 0xFF
+                if k == ord('n'):
+                    self.Drawing = False
+                    break
+                elif k == ord('q'):
+                    self.quit = True
+                    break
 
 
-quit = False
-
-while (not quit):
-    Img = np.zeros((500, 700, 3), np.uint8)
-    Img = np.full(Img.shape, 255, np.uint8)
-    cv2.namedWindow('Image')
-    cv2.setMouseCallback('Image', drawCircle)
-
-    nn = zzr.Neural_Networks()
-    nn.whid = np.load("./npys/whid.npy")
-    nn.wout = np.load("./npys/wout.npy")
-
-    while (1):
-        cv2.imshow('Image', Img)
-        k = cv2.waitKey(1) & 0xFF
-        if k == ord('n'):
-            # Img = cv2.resize(Img, (28, 28), interpolation=cv2.INTER_CUBIC)
-            cv2.imwrite('./zzr/try.png', Img)
-
-            imgs = cluster.getImage('./zzr/try.png')
-            guess = ''
-            for pair in imgs:
-                out = nn.judge(nn.convert_to_binary(pair[1]))
-                guess += str(out)
-            print('我猜是　　:  ' + guess)
-            break
-        elif k == ord('q'):
-            quit = True
-            break
-cv2.destroyAllWindows()
+if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
+    one = doodleBoard()
+    one.run()
+    cv2.destroyAllWindows()

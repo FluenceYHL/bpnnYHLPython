@@ -7,6 +7,7 @@ import image
 import math
 import numpy
 import images.fileFilter
+from operator import itemgetter
 
 # 求两点之间的欧氏距离
 
@@ -15,13 +16,7 @@ def distance(l, r):
     return math.sqrt((l[0] - r[0])**2 + (l[1] - r[1])**2)
 
 
-myCount = 0
-
-
-def getImage(path):
-    print(path)
-    global myCount
-    myImage = cv2.imread(path, cv2.IMREAD_COLOR)
+def getImages(myImage):
     myImage = cv2.resize(myImage, (70, 70))
     myImage = cv2.cvtColor(myImage, cv2.COLOR_BGR2GRAY)
 
@@ -88,31 +83,32 @@ def getImage(path):
                     img[y + 1, x] = 0
 
             img = cv2.resize(img, (28, 28))
-            imgs.append([meanX, img])   # 存储这整张图片所有的数字
+            imgs.append([meanY, meanX, img])   # 存储这整张图片所有的数字
 
-        imgs = sorted(imgs, key=lambda p: p[0])
+        imgs = sorted(imgs, key=itemgetter(1, 0))
 
         # cnt = 0
+        # # global myCount
         # for pair in imgs:
         #     cnt = cnt + 1
         #     print('均值　 :  ' + str(pair[0]))
-        #     myCount = myCount + 1
-        #     print('myCount  =  ' + str(myCount))
-        #     cv2.imshow(str(cnt) + '.png', pair[1])
-        #     cv2.imwrite('./images/handled/' + str(myCount) + '.png', pair[1])
+        #     # myCount = myCount + 1
+        #     # print('myCount  =  ' + str(myCount))
+        #     cv2.imshow(str(cnt) + '.png', pair[2])
+        #     # cv2.imwrite('./images/handled/' + str(myCount) + '.png', pair[1])
         #     cv2.waitKey()
         return imgs
 
 
+def getImage(path):
+    print(path)
+    myImage = cv2.imread(path, cv2.IMREAD_COLOR)
+    return getImages(myImage)
+
+
 if __name__ == '__main__':
     fileDir = './images/origin'
-    # fileList = os.listdir(fileDir)  # 　获取文件列表
-    # for one in fileList:           # 对每一张图像
-    #     path = os.path.join(fileDir, one)
-    #     getImage(path)
-
     fileList = images.fileFilter.filter(fileDir)
     for it in fileList:
         getImage(it)
-
     cv2.destroyAllWindows()
