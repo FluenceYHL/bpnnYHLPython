@@ -23,13 +23,28 @@ class doodleBoard():
         cv2.namedWindow('Image')
         cv2.setMouseCallback('Image', self.__paint)
 
-    def __predict(self):
+    def __predict(self, threshold=0.5):
         imgs = cluster.getImages(self.Img)
         guess = ''
         for pair in imgs:
             out = self.bpnn.judge(
                 self.bpnn.convert_to_binary(pair[2]))
-            guess += str(out)
+            res = []
+            # cv2.imshow('yhl2.png', pair[2])
+            if(np.max(out) < threshold):
+                for i in range(3):
+                    pair[2] = np.rot90(pair[2])
+                    # cv2.imshow('yhl.png', pair[2])
+                    # cv2.waitKey()
+                    out = self.bpnn.judge(
+                        self.bpnn.convert_to_binary(pair[2]))
+                    index = np.argmax(out)
+                    res.append([1 - out[index], index])
+                res.sort()
+                print(res)
+                guess += str(res[0][1])
+            else:
+                guess += str(np.argmax(out))
         print('我猜是　　:  ' + guess)
         components.speaker().speak(int(guess))
         # components.noticeBoard(480, 560, '基尔兽').display(guess)

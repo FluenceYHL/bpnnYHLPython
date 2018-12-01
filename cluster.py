@@ -56,15 +56,19 @@ def getImages(myImage):
             meanY = 0
             floor = -1
             ceil = 1e6
+            left = 1e6
+            right = -1
             for p in it:
                 meanX += points[p][1]               # x 均值
                 meanY += points[p][0]               # y 均值
                 floor = max(floor, points[p][0])  # 图像下限
                 ceil = min(ceil, points[p][0])      # 图像上限
+                left = min(left, points[p][1])
+                right = max(right, points[p][1])
             meanX /= len(it)
             meanY /= len(it)
 
-            radius = (floor - ceil) / 2  # 　竖向半径
+            radius = max((floor - ceil) / 2, (right - left) / 2)  # 　竖向半径
             assert(radius > 0)
 
             img = numpy.zeros(

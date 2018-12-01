@@ -40,13 +40,13 @@ def traverse(f, mode=1):
             imgs = cluster.getImage(path)
             result = ''
             for img in imgs:
-                out = bpnn.judge(bpnn.convert_to_binary(img[2]))
+                out = numpy.argmax(bpnn.judge(bpnn.convert_to_binary(img[2])))
                 print(out)
                 result += str(out)
             print(result)
         else:
             img = cv2.imread(path, 0)
-            guess = bpnn.judge(bpnn.convert_to_binary(img))
+            guess = numpy.argmax(bpnn.judge(bpnn.convert_to_binary(img)))
             print(path)
             if(guess == output[count]):
                 right = right + 1
